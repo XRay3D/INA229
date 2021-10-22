@@ -1,5 +1,17 @@
 #pragma once
-
+/****************************************************************************
+*                                                                           *
+* Author    :  Damir Bakiev                                                 *
+* Version   :  na                                                           *
+* Date      :  22 Okt 2021                                                  *
+* Website   :  na                                                           *
+* Copyright :  Damir Bakiev 2016-2021                                       *
+*                                                                           *
+* This software component is licensed by ST under BSD 3-Clause license,     *
+* the "License"; You may not use this file except in compliance with the    *
+* License. You may obtain a copy of the License at:                         *
+*                        opensource.org/licenses/BSD-3-Clause               *
+*****************************************************************************/
 #include "stm32l4xx.h"
 
 #include <algorithm>

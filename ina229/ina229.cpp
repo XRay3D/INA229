@@ -1,5 +1,23 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
+/****************************************************************************
+*                                                                           *
+* Author    :  Damir Bakiev                                                 *
+* Version   :  na                                                           *
+* Date      :  22 Okt 2021                                                  *
+* Website   :  na                                                           *
+* Copyright :  Damir Bakiev 2016-2021                                       *
+*                                                                           *
+* This software component is licensed by ST under BSD 3-Clause license,     *
+* the "License"; You may not use this file except in compliance with the    *
+* License. You may obtain a copy of the License at:                         *
+*                        opensource.org/licenses/BSD-3-Clause               *
+*****************************************************************************/
+
 #include "ina229.h"
 #include "main.h"
+
 
 #define MEM_TO_SPI_3 DMA1, LL_DMA_CHANNEL_3
 #define SPI_TO_MEM_2 DMA1, LL_DMA_CHANNEL_2
