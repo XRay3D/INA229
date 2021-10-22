@@ -174,12 +174,12 @@ public:
     };
 
     struct ENERGY {
-        uint64_t Energy : 40; //R 0h Calculated energy output. Output value is in Joules.Unsigned representation. Positive value.
+        uint64_t value : 40; //R 0h Calculated energy output. Output value is in Joules.Unsigned representation. Positive value.
                               //     Value description under Section 8.1.2.
     };
 
     struct CHARGE {
-        uint64_t charge : 40; //R 0h Calculated charge output. Output value is in Coulombs.Two's complement value.
+        uint64_t value : 40; //R 0h Calculated charge output. Output value is in Coulombs.Two's complement value.
                               //     Value description under Section 8.1.2.
 
     };
@@ -399,6 +399,8 @@ public:
     float dieTemp();
     float current();
     float power();
+    float charge();
+    float energy();
 
     void setShuntRes(float res);
 

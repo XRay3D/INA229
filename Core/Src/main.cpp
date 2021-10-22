@@ -65,12 +65,13 @@ int main(void) {
             size = sprintf(buf, "INA229 is absent!\n");
         } else {
             if (ina229.getDiagAlrt().cnvrf == INA229::CNVRF::ConversionIsComplete) {
-                size = sprintf(buf, "dieTemp:% 6.3f, vBus:% 6.3f, vShunt:% 6.3f, current:% 6.3f\n",
-                    ina229.dieTemp(), ina229.vBus(), ina229.vShunt(), ina229.current());
-                usartTx(buf, size);
-
-                size = sprintf(buf, "power:% 6.3f\n", ina229.power());
-                usartTx(buf, size);
+                usartTx(buf, sprintf(buf, "\ndieTemp:% 6.3f°C\n", ina229.dieTemp()));
+                usartTx(buf, sprintf(buf, "vBus:   % 6.3fV\n", ina229.vBus()));
+                usartTx(buf, sprintf(buf, "vShunt: % 6.3fV\n", ina229.vShunt()));
+                usartTx(buf, sprintf(buf, "current:% 6.3fA\n", ina229.current()));
+                usartTx(buf, sprintf(buf, "power:  % 6.3fW\n", ina229.power()));
+                usartTx(buf, sprintf(buf, "charge: % 6.3fC\n", ina229.charge()));
+                usartTx(buf, sprintf(buf, "energy: % 6.3fJ\n", ina229.energy()));
             }
         }
         LL_mDelay(100);

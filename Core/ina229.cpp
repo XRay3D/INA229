@@ -158,6 +158,16 @@ float INA229::power() {
     return data.power.value * 3.2 * CURRENT_LSB;
 }
 
+float INA229::charge() {
+    dmaRead(Register::CHARGE);
+    return data.charge.value * CURRENT_LSB;
+}
+
+float INA229::energy() {
+    dmaRead(Register::ENERGY);
+    return data.energy.value * 16 * 3.2 * CURRENT_LSB;
+}
+
 void INA229::setShuntRes(float res) {
     if (res_ == res)
         return;
