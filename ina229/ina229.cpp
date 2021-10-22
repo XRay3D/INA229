@@ -18,60 +18,60 @@
 #include "ina229.h"
 #include "main.h"
 
-
 #define MEM_TO_SPI_3 DMA1, LL_DMA_CHANNEL_3
 #define SPI_TO_MEM_2 DMA1, LL_DMA_CHANNEL_2
+namespace INA229 {
 
-constexpr uint8_t operator|(INA229::Register reg, INA229::Register rw) { return uint8_t(reg) + uint8_t(rw); }
+constexpr uint8_t operator|(Register reg, Register rw) { return uint8_t(reg) + uint8_t(rw); }
 
-constexpr auto size = [](INA229::Register Reg) -> uint8_t {
+constexpr auto size = [](Register Reg) -> uint8_t {
     switch (Reg) {
-    case INA229::Register::CONFIG:
+    case Register::CONFIG:
         return 16 / 8;
-    case INA229::Register::ADC_CONFIG:
+    case Register::ADC_CONFIG:
         return 16 / 8;
-    case INA229::Register::SHUNT_CAL:
+    case Register::SHUNT_CAL:
         return 16 / 8;
-    case INA229::Register::SHUNT_TEMPCO:
+    case Register::SHUNT_TEMPCO:
         return 16 / 8;
-    case INA229::Register::VSHUNT:
+    case Register::VSHUNT:
         return 24 / 8;
-    case INA229::Register::VBUS:
+    case Register::VBUS:
         return 24 / 8;
-    case INA229::Register::DIETEMP:
+    case Register::DIETEMP:
         return 16 / 8;
-    case INA229::Register::CURRENT:
+    case Register::CURRENT:
         return 24 / 8;
-    case INA229::Register::POWER:
+    case Register::POWER:
         return 24 / 8;
-    case INA229::Register::ENERGY:
+    case Register::ENERGY:
         return 40 / 8;
-    case INA229::Register::CHARGE:
+    case Register::CHARGE:
         return 40 / 8;
-    case INA229::Register::DIAG_ALRT:
+    case Register::DIAG_ALRT:
         return 16 / 8;
-    case INA229::Register::SOVL:
+    case Register::SOVL:
         return 16 / 8;
-    case INA229::Register::SUVL:
+    case Register::SUVL:
         return 16 / 8;
-    case INA229::Register::BOVL:
+    case Register::BOVL:
         return 16 / 8;
-    case INA229::Register::BUVL:
+    case Register::BUVL:
         return 16 / 8;
-    case INA229::Register::TEMP_LIMIT:
+    case Register::TEMP_LIMIT:
         return 16 / 8;
-    case INA229::Register::PWR_LIMIT:
+    case Register::PWR_LIMIT:
         return 16 / 8;
-    case INA229::Register::MANUFACTURER_ID:
+    case Register::MANUFACTURER_ID:
         return 16 / 8;
-    case INA229::Register::DEVICE_ID:
+    case Register::DEVICE_ID:
         return 16 / 8;
     default:
         return {};
     }
 };
 
-void INA229::dmaRead(Register reg) const {
+void Device::dmaRead(Register reg) const {
     data.reg = reg | Register::Read;
     auto size_ = size(reg) + 1;
     LL_DMA_SetDataLength(MEM_TO_SPI_3, size_);
@@ -87,7 +87,7 @@ void INA229::dmaRead(Register reg) const {
     LL_DMA_DisableChannel(SPI_TO_MEM_2);
 }
 
-void INA229::dmaWrite(Register reg) const {
+void Device::dmaWrite(Register reg) const {
     data.reg = reg | Register::Write;
     auto size_ = size(reg) + 1;
     std::reverse(data.data, data.data + size_ - 1);
@@ -104,14 +104,14 @@ void INA229::dmaWrite(Register reg) const {
     LL_DMA_DisableChannel(SPI_TO_MEM_2);
 }
 
-INA229::INA229(SPI_TypeDef* SPIx)
+Device::Device(SPI_TypeDef* SPIx)
     : SPIx { SPIx } {
     init();
 }
 
 constexpr uint8_t operator""_ms(unsigned long long val) { return val >> 1; }
 
-void INA229::init() {
+void Device::init() {
     LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_4, LL_GPIO_MODE_OUTPUT);
     GPIOA->BSRR = LL_GPIO_PIN_4;
 
@@ -151,46 +151,48 @@ void INA229::init() {
     dmaWrite(Register::ADC_CONFIG);
 }
 
-float INA229::vBus() {
+float Device::vBus() {
     dmaRead(Register::VBUS);
     return data.vbus.value * 0.000'195'312'5f; // Conversion factor: 195.3125 μV/LSB
 }
 
-float INA229::vShunt() {
+float Device::vShunt() {
     dmaRead(Register::VSHUNT);
     return data.vshunt.value * (adcrange_ == ADCRANGE::_163_84mV ? 0.000'000'312'5f : 0.000'078'125f);
 }
 
-float INA229::dieTemp() {
+float Device::dieTemp() {
     dmaRead(Register::DIETEMP);
     return data.dietemp * 0.007'812'5f; // 7.8125 m°C/LSB
 }
 
-float INA229::current() {
+float Device::current() {
     dmaRead(Register::CURRENT);
     return data.current.value * CURRENT_LSB;
 }
 
-float INA229::power() {
+float Device::power() {
     dmaRead(Register::POWER);
     return data.power.value * 3.2 * CURRENT_LSB;
 }
 
-float INA229::charge() {
+float Device::charge() {
     dmaRead(Register::CHARGE);
     return data.charge.value * CURRENT_LSB;
 }
 
-float INA229::energy() {
+float Device::energy() {
     dmaRead(Register::ENERGY);
     return data.energy.value * 16 * 3.2 * CURRENT_LSB;
 }
 
-void INA229::setShuntRes(float res) {
+void Device::setShuntRes(float res) {
     if (res_ == res)
         return;
     res_ = res;
     data.clear();
     data.shuntCal.currLsb = 13'107'200'000ULL * CURRENT_LSB * res_;
     dmaWrite(Register::SHUNT_CAL);
+}
+
 }

@@ -46,7 +46,7 @@ int main(void) {
     LL_USART_EnableDMAReq_TX(USART2);
     LL_USART_Enable(USART2);
 
-    INA229 ina229 { SPI1 };
+    INA229::Device ina229 { SPI1 };
     ina229.setShuntRes(0.022);
 
     auto usartTx = [](char* buf, uint8_t size) {
@@ -74,7 +74,7 @@ int main(void) {
                 usartTx(buf, sprintf(buf, "energy: % 6.3fJ\n", ina229.energy()));
             }
         }
-        LL_mDelay(100);
+        LL_mDelay(10);
         LL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
     }
 }
