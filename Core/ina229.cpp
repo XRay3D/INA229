@@ -125,10 +125,10 @@ void INA229::init() {
     dmaWrite(Register::CONFIG);
 
     data.clear();
-    data.adcConfig.avg = AVG::_1024;
-    data.adcConfig.vbusct = ConvTime::_4120us;
-    data.adcConfig.vshct = ConvTime::_4120us;
-    data.adcConfig.vtct = ConvTime::_4120us;
+    data.adcConfig.avg = AVG::_128;
+    data.adcConfig.vbusct = ConvTime::_280us;
+    data.adcConfig.vshct = ConvTime::_280us;
+    data.adcConfig.vtct = ConvTime::_280us;
     data.adcConfig.mode = MODE::ContinuousTUI;
     dmaWrite(Register::ADC_CONFIG);
 }

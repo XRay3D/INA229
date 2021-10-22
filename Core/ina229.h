@@ -165,7 +165,7 @@ public:
 
     struct CURRENT {
         unsigned : 4;
-        uint32_t value : 20; //R 0h Calculated current output in Amperes. Two's complement value. Value description under Section 8.1.2.
+        int32_t value : 20; //R 0h Calculated current output in Amperes. Two's complement value. Value description under Section 8.1.2.
     };
 
     struct POWER {
