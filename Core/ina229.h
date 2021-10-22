@@ -169,7 +169,7 @@ public:
     };
 
     struct POWER {
-        unsigned power : 24; //R 0h Calculated power output. Output value in watts. Unsigned representation.
+        unsigned value : 24; //R 0h Calculated power output. Output value in watts. Unsigned representation.
                              //     Positive value. Value description under Section 8.1.2.
     };
 
@@ -382,7 +382,7 @@ private:
     } data;
 #pragma pack(pop)
 
-    static constexpr float CurrentLsb = 1.0 / 524'288UL;
+    static constexpr float CURRENT_LSB = 1.0 / 524'288UL;
 
     void dmaRead(Register reg) const;
     void dmaWrite(Register reg) const;
@@ -398,6 +398,7 @@ public:
     float vShunt();
     float dieTemp();
     float current();
+    float power();
 
     void setShuntRes(float res);
 

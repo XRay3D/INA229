@@ -48,22 +48,29 @@ int main(void) {
 
     INA229 ina229 { SPI1 };
     ina229.setShuntRes(0.022);
+
+    auto usartTx = [](char* buf, uint8_t size) {
+        while (LL_DMA_IsEnabledChannel(MEM_TO_USART_7) && !LL_DMA_IsActiveFlag_TC7(DMA1)) { }
+        LL_DMA_ClearFlag_TC7(DMA1);
+        LL_DMA_DisableChannel(MEM_TO_USART_7);
+        LL_DMA_SetDataLength(MEM_TO_USART_7, size);
+        LL_DMA_SetMemoryAddress(MEM_TO_USART_7, uint32_t(buf));
+        LL_DMA_EnableChannel(MEM_TO_USART_7);
+    };
     while (1) {
         char buf[100] {};
         uint8_t size {};
         if (!ina229) {
             size = sprintf(buf, "INA229 is absent!\n");
         } else {
-            if (ina229.getDiagAlrt().cnvrf == INA229::CNVRF::ConversionIsComplete)
-                size = sprintf(buf, "dieTemp:% 6.3f, vBus:% 6.3f, vShunt:% 6.3f, current:% 6.3f\n", ina229.dieTemp(), ina229.vBus(), ina229.vShunt(), ina229.current());
-        }
-        if (size) { // USART
-            while (LL_DMA_IsEnabledChannel(MEM_TO_USART_7) && !LL_DMA_IsActiveFlag_TC7(DMA1)) { }
-            LL_DMA_ClearFlag_TC7(DMA1);
-            LL_DMA_DisableChannel(MEM_TO_USART_7);
-            LL_DMA_SetDataLength(MEM_TO_USART_7, size);
-            LL_DMA_SetMemoryAddress(MEM_TO_USART_7, uint32_t(buf));
-            LL_DMA_EnableChannel(MEM_TO_USART_7);
+            if (ina229.getDiagAlrt().cnvrf == INA229::CNVRF::ConversionIsComplete) {
+                size = sprintf(buf, "dieTemp:% 6.3f, vBus:% 6.3f, vShunt:% 6.3f, current:% 6.3f\n",
+                    ina229.dieTemp(), ina229.vBus(), ina229.vShunt(), ina229.current());
+                usartTx(buf, size);
+
+                size = sprintf(buf, "power:% 6.3f\n", ina229.power());
+                usartTx(buf, size);
+            }
         }
         LL_mDelay(100);
         LL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);

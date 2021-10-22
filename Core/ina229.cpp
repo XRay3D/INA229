@@ -150,7 +150,12 @@ float INA229::dieTemp() {
 
 float INA229::current() {
     dmaRead(Register::CURRENT);
-    return data.current.value * CurrentLsb;
+    return data.current.value * CURRENT_LSB;
+}
+
+float INA229::power() {
+    dmaRead(Register::POWER);
+    return data.power.value * 3.2 * CURRENT_LSB;
 }
 
 void INA229::setShuntRes(float res) {
@@ -158,6 +163,6 @@ void INA229::setShuntRes(float res) {
         return;
     res_ = res;
     data.clear();
-    data.shuntCal.currLsb = 13'107'200'000ULL * CurrentLsb * res_;
+    data.shuntCal.currLsb = 13'107'200'000ULL * CURRENT_LSB * res_;
     dmaWrite(Register::SHUNT_CAL);
 }
