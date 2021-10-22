@@ -13,8 +13,7 @@
 
 void SystemClock_Config(void);
 
-int main(void)
-{
+int main(void) {
 
     /* MCU Configuration--------------------------------------------------------*/
 
@@ -111,7 +110,7 @@ int main(void)
         //        }
 
         char buf[100] {};
-        auto size = sprintf(buf, "dieTemp:% 6.3f, vBus:% 6.3f, vShunt:% 6.3f\n", ina229.dieTemp(), ina229.vBus(), ina229.vShunt());
+        auto size = sprintf(buf, "dieTemp:% 6.3f, vBus:% 6.3f, vShunt:% 6.3f, current:% 6.3f\n", ina229.dieTemp(), ina229.vBus(), ina229.vShunt(), ina229.current());
 
         //        char buf[100] {};
         //        auto size = sprintf(buf, "vBus: %f\n", ina229.vBus());
@@ -134,8 +133,7 @@ int main(void)
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void)
-{
+void SystemClock_Config(void) {
     LL_FLASH_SetLatency(LL_FLASH_LATENCY_4);
     while (LL_FLASH_GetLatency() != LL_FLASH_LATENCY_4) {
     }
@@ -168,8 +166,7 @@ void SystemClock_Config(void)
  * @brief This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void)
-{
+void Error_Handler(void) {
 
     __disable_irq();
     while (1) {
@@ -184,8 +181,7 @@ void Error_Handler(void)
  * @param line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line)
-{
+void assert_failed(uint8_t* file, uint32_t line) {
 
     /* User can add his own implementation to report the file name and line number,
  ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

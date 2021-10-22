@@ -8,8 +8,18 @@
 #include <cstring>
 
 class INA229 {
+
 public:
-#pragma pack(push, 1)
+    INA229(SPI_TypeDef* SPIx);
+
+    void init();
+
+    operator bool() const { return present; }
+
+    float vBus();
+    float vShunt();
+    float dieTemp();
+    float current();
 
     enum class Register : uint8_t {
         // clang-format off
@@ -40,22 +50,28 @@ public:
         // clang-format on
     };
 
-    enum class RST : unsigned { //Reset Bit. Setting this bit to '1' generates a system reset that is the same as power-on reset.
+private:
+    SPI_TypeDef* const SPIx;
+    bool present;
+
+#pragma pack(push, 1)
+
+    enum class RST : uint8_t { //Reset Bit. Setting this bit to '1' generates a system reset that is the same as power-on reset.
         NormalOperation,
         SystemReset
     };
 
-    enum class RSTACC : unsigned { //Resets the contents of accumulation registers ENERGY and CHARGE to 0
+    enum class RSTACC : uint8_t { //Resets the contents of accumulation registers ENERGY and CHARGE to 0
         NormalOperation,
         ClearsRegistersENERGY_CHARGE
     };
 
-    enum class TEMPCOMP : unsigned { //Enables temperature compensation of an external shunt
+    enum class TEMPCOMP : uint8_t { //Enables temperature compensation of an external shunt
         ShuntTemperatureCompensationDisabled,
         ShuntTemperatureCompensationEnabled
     };
 
-    enum class ADCRANGE : unsigned { //Shunt full scale range selection across IN+ and IN–.
+    enum class ADCRANGE : uint8_t { //Shunt full scale range selection across IN+ and IN–.
         _163_84mV,
         _40_96mV
     };
@@ -123,12 +139,12 @@ public:
     };
 
     struct SHUNT_CAL {
-        uint16_t CURRLSB : 15; //R/W 1000h
+        uint16_t currLsb : 15; //R/W 1000h
         unsigned : 1;
     };
 
     struct SHUNT_TEMPCO {
-        uint16_t CURRLSB : 14; //R/W 0h
+        uint16_t currLsb : 14; //R/W 0h
         unsigned : 2;
     };
 
@@ -150,7 +166,7 @@ public:
     };
 
     struct POWER {
-        unsigned POWER : 24; //R
+        unsigned power : 24; //R
     };
 
     struct ENERGY {
@@ -158,7 +174,7 @@ public:
     };
 
     struct CHARGE {
-        uint64_t CHARGE : 40; //R
+        uint64_t charge : 40; //R
     };
 
     enum class ALATCH { //	R/W	0h	When the Alert Latch Enable bit is set to Transparent mode, the Alert pin and Flag bit reset to the idle state when the fault has been cleared.
@@ -254,66 +270,52 @@ public:
     };
 
     struct DIAG_ALRT {
-        unsigned MEMSTAT : 1; // R/W 1h
-        unsigned CNVRF : 1; // R/W 0h
-        unsigned POL : 1; // R/W 0h
-        unsigned BUSUL : 1; // R/W 0h
-        unsigned BUSOL : 1; // R/W 0h
-        unsigned SHNTUL : 1; // R/W 0h
-        unsigned SHNTOL : 1; // R/W 0h
-        unsigned TMPOL : 1; // R/W 0h
-        unsigned RESERVED : 1; // R 0h
-        unsigned MATHOF : 1; // R 0h
-        unsigned CHARGEOF : 1; // R 0h
-        unsigned ENERGYOF : 1; // R 0h
-        unsigned APOL : 1; // R/W 0h
-        unsigned SLOWALERT : 1; // R/W 0h
-        unsigned CNVR : 1; // R/W 0h
-        unsigned ALATCH : 1; // R/W 0h
+        MEMSTAT memstat : 1; // R/W 1h
+        CNVRF cnvrf : 1; // R/W 0h
+        POL pol : 1; // R/W 0h
+        BUSUL busul : 1; // R/W 0h
+        BUSOL busol : 1; // R/W 0h
+        SHNTUL shntul : 1; // R/W 0h
+        SHNTOL shntol : 1; // R/W 0h
+        TMPOL tmpol : 1; // R/W 0h
+        unsigned : 1; // R 0h
+        MATHOF mathof : 1; // R 0h
+        CHARGEOF chargeof : 1; // R 0h
+        ENERGYOF energyof : 1; // R 0h
+        APOL apol : 1; // R/W 0h
+        SLOWALERT slowalert : 1; // R/W 0h
+        CNVR cnvr : 1; // R/W 0h
+        ALATCH alatch : 1; // R/W 0h
     };
 
     using SOVL = uint16_t; //R/W 7FFFh Sets the threshold for comparison of the value to detect ShuntOvervoltage (overcurrent protection). Two's complement value. Conversion Factor: unsigned μV/LSB:1;// when ADCRANGE = 01.25 μV/LSB when ADCRANGE = 1
     using SUVL = uint16_t; //R/W 8000h Sets the threshold for comparison of the value to detect ShuntUndervoltage (undercurrent protection). Two's complement value. Conversion Factor: unsigned μV/LSB:1;// when ADCRANGE = 01.25 μV/LSB when ADCRANGE = 1
 
     struct BOVL {
-        /*
-Sets the threshold for comparison of the value to detect BusOvervoltage (overvoltage protection). Unsigned representation,positive value only. Conversion factor: 3.unsigned mV/LSB:1;//.
-*/
-        unsigned BOVL : 15; //R/W 7FFFh
-        unsigned Reserved : 1;
+        unsigned bovl : 15; //R/W 7FFFh
+        unsigned : 1;
     };
 
     struct BUVL {
-        /*
-Sets the threshold for comparison of the value to detect BusUndervoltage (undervoltage protection). Unsigned representation,positive value only. Conversion factor: 3.unsigned mV/LSB:1;//.
-*/
-        unsigned BUVL : 15; //R/W 0h
-        unsigned Reserved : 1;
+        unsigned buvl : 15; //R/W 0h
+        unsigned : 1;
     };
 
     using TEMP_LIMIT /*TOL*/ = uint16_t; //R/W 7FFFh Sets the threshold for comparison of the value to detect overtemperature measurements. Two's complement value.The value entered in this field compares directly against the valuefrom the DIETEMP register to determine if an over temperaturecondition exists. Conversion factor: 7.unsigned m°C/LSB:1;//.
     using PWR_LIMIT /*POL*/ = uint16_t; //R/W FFFFh Sets the threshold for comparison of the value to detect power over-limit measurements. Unsigned representation, positive value only.The value entered in this field compares directly against the valuefrom the POWER register to determine if an over power conditionexists. Conversion factor: unsigned ×:1;// Power LSB
 
     struct MANUFACTURER_ID {
-        uint8_t ID0; //R 5449h Reads back TI in ASCII.
-        uint8_t ID1;
+        uint8_t Id0; //R 5449h Reads back TI in ASCII.
+        uint8_t Id1;
     };
 
     struct DEVICE_ID {
-        unsigned REV_ID : 4; //R 1h fDevice revision identification.
-        unsigned DIEID : 12; //R 229h Stores the device identification bits
+        unsigned revid : 4; //R 1h fDevice revision identification.
+        unsigned dieid : 12; //R 229h Stores the device identification bits
     };
-#pragma pack(pop)
 
 private:
-    SPI_TypeDef* const SPIx;
-    bool present;
-
-    void dmaRead(Register reg);
-    void dmaWrite(Register reg);
-
-#pragma pack(push, 1)
-    struct {
+    struct Data {
         uint8_t reg;
         union {
             ADC_CONFIG adcConfig;
@@ -342,41 +344,6 @@ private:
     } data;
 #pragma pack(pop)
 
-public:
-    INA229(SPI_TypeDef* SPIx);
-
-    void init();
-
-    operator bool() const;
-
-    float vBus()
-    {
-        dmaRead(Register::VBUS);
-        std::swap(data.data[0], data.data[2]);
-        return data.vbus.value * 0.000'195'312'5f; //Conversion factor: 195.3125 μV/LSB
-    }
-
-    float vShunt()
-    {
-        // 312.5 nV/LSB when ADCRANGE = 0
-        // 78.125 nV/LSB when ADCRANGE = 1
-        dmaRead(Register::VSHUNT);
-        std::swap(data.data[0], data.data[2]);
-        return data.vshunt.value * 0.000'078'125f;
-    }
-
-    float dieTemp()
-    {
-        dmaRead(Register::DIETEMP);
-        std::swap(data.data[0], data.data[1]);
-        return data.dietemp * 0.007'812'5f; //7.8125 m°C/LSB
-    }
-
-    float current()
-    {
-        const float CURRENT_LSB = 1.0 / pow(2, 19);
-        dmaRead(Register::CURRENT);
-        std::swap(data.data[0], data.data[2]);
-        return data.current.value * CURRENT_LSB;
-    }
+    void dmaRead(Register reg);
+    void dmaWrite(Register reg);
 };
