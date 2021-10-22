@@ -132,21 +132,21 @@ void Device::init() {
     if (!present)
         return;
 
-    data.clear();
-    data.config.Rst = RST::SystemReset;
-    dmaWrite(Register::CONFIG);
+    //    data.clear();
+    //    data.config.Rst = RST::SystemReset;
+    //    dmaWrite(Register::CONFIG);
 
     data.clear();
     data.config.AdcRange = adcrange_ = ADCRANGE::_163_84mV;
     data.config.Convdly = 64_ms;
-    data.config.RstAcc = RSTACC::ClearsRegistersENERGY_CHARGE;
+    //    data.config.RstAcc = RSTACC::ClearsRegistersENERGY_CHARGE;
     dmaWrite(Register::CONFIG);
 
     data.clear();
-    data.adcConfig.avg = AVG::_128;
-    data.adcConfig.vbusct = ConvTime::_280us;
-    data.adcConfig.vshct = ConvTime::_280us;
-    data.adcConfig.vtct = ConvTime::_280us;
+    data.adcConfig.avg = AVG::_4;
+    data.adcConfig.vbusct = ConvTime::_4120us;
+    data.adcConfig.vshct = ConvTime::_4120us;
+    data.adcConfig.vtct = ConvTime::_4120us;
     data.adcConfig.mode = MODE::ContinuousTUI;
     dmaWrite(Register::ADC_CONFIG);
 }

@@ -161,7 +161,7 @@ struct SHUNT_TEMPCO {
 
 struct VSHUNT {
     unsigned : 4;
-    uint32_t value : 20; //R 0h Differential voltage measured across the shunt output. Two's complement value.
+    int32_t value : 20; //R 0h Differential voltage measured across the shunt output. Two's complement value.
                          //     Conversion factor:
                          //     312.5 nV/LSB when ADCRANGE = 0
                          //     78.125 nV/LSB when ADCRANGE = 1
@@ -362,6 +362,7 @@ struct DEVICE_ID {
     unsigned revid :  4; // R 1h    Device revision identification.
     unsigned dieid : 12; // R 229h  Stores the device identification bits.
 };
+#pragma pack(pop)
 // clang-format on
 
 ///////////////////////////////////////////////////////////////////////
@@ -393,6 +394,11 @@ public:
     bool conversionIsComplete() const { return getDiagAlrt().cnvrf == CNVRF::ConversionIsComplete; }
 
 private:
+    SPI_TypeDef* const SPIx;
+
+    float res_;
+
+#pragma pack(push, 1)
     mutable struct Data {
         uint8_t reg;
         union {
@@ -416,23 +422,17 @@ private:
             TEMP_LIMIT tempLimit;
             VBUS vbus;
             VSHUNT vshunt;
-            uint8_t data[8];
+            uint8_t data[1];
         };
         void clear() { std::memset(this, 0, sizeof *this); }
     } data;
 #pragma pack(pop)
-
+    ADCRANGE adcrange_ {};
+    bool present;
     static constexpr float CURRENT_LSB = 1.0 / 524'288UL;
 
     void dmaRead(Register reg) const;
     void dmaWrite(Register reg) const;
-    SPI_TypeDef* const SPIx;
-
-    float res_;
-
-    ADCRANGE adcrange_ {};
-
-    bool present;
 };
 
 }
