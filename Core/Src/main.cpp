@@ -1,5 +1,5 @@
 #include "main.h"
-#include "../ina229.h"
+#include "../../ina229/ina229.h"
 #include "dma.h"
 #include "gpio.h"
 #include "spi.h"
