@@ -53,7 +53,7 @@ constexpr auto size = [](INA229::Register Reg) -> uint8_t {
     }
 };
 
-void INA229::dmaRead(Register reg) {
+void INA229::dmaRead(Register reg) const {
     data.reg = reg | Register::Read;
     auto size_ = size(reg) + 1;
     LL_DMA_SetDataLength(MEM_TO_SPI_3, size_);
@@ -69,7 +69,7 @@ void INA229::dmaRead(Register reg) {
     LL_DMA_DisableChannel(SPI_TO_MEM_2);
 }
 
-void INA229::dmaWrite(Register reg) {
+void INA229::dmaWrite(Register reg) const {
     data.reg = reg | Register::Write;
     auto size_ = size(reg) + 1;
     std::reverse(data.data, data.data + size_ - 1);
@@ -119,45 +119,45 @@ void INA229::init() {
     dmaWrite(Register::CONFIG);
 
     data.clear();
-    data.config.Adcrange = ADCRANGE::_163_84mV;
+    data.config.AdcRange = adcrange_ = ADCRANGE::_163_84mV;
     data.config.Convdly = 64_ms;
-    data.config.Rstacc = RSTACC::ClearsRegistersENERGY_CHARGE;
+    data.config.RstAcc = RSTACC::ClearsRegistersENERGY_CHARGE;
     dmaWrite(Register::CONFIG);
 
     data.clear();
-    data.adcConfig.avg = AVG::_1;
-    data.adcConfig.vbusct = ConvTime::_50us;
-    data.adcConfig.vshct = ConvTime::_50us;
-    data.adcConfig.vtct = ConvTime::_50us;
+    data.adcConfig.avg = AVG::_1024;
+    data.adcConfig.vbusct = ConvTime::_4120us;
+    data.adcConfig.vshct = ConvTime::_4120us;
+    data.adcConfig.vtct = ConvTime::_4120us;
     data.adcConfig.mode = MODE::ContinuousTUI;
     dmaWrite(Register::ADC_CONFIG);
-
-    data.clear();
-    float CURRENT_LSB = 1.0 / pow(2, 19);
-    CURRENT_LSB = 13107'200'000ULL * CURRENT_LSB * 0.022;
-    data.shuntCal.currLsb = CURRENT_LSB;
-    dmaWrite(Register::SHUNT_CAL);
 }
 
 float INA229::vBus() {
     dmaRead(Register::VBUS);
-    return data.vbus.value * 0.000'195'312'5f; //Conversion factor: 195.3125 μV/LSB
+    return data.vbus.value * 0.000'195'312'5f; // Conversion factor: 195.3125 μV/LSB
 }
 
 float INA229::vShunt() {
-    // 312.5 nV/LSB when ADCRANGE = 0
-    // 78.125 nV/LSB when ADCRANGE = 1
     dmaRead(Register::VSHUNT);
-    return data.vshunt.value * 0.000'078'125f;
+    return data.vshunt.value * (adcrange_ == ADCRANGE::_163_84mV ? 0.000'000'312'5f : 0.000'078'125f);
 }
 
 float INA229::dieTemp() {
     dmaRead(Register::DIETEMP);
-    return data.dietemp * 0.007'812'5f; //7.8125 m°C/LSB
+    return data.dietemp * 0.007'812'5f; // 7.8125 m°C/LSB
 }
 
 float INA229::current() {
-    const float CURRENT_LSB = 1.0 / pow(2, 19);
     dmaRead(Register::CURRENT);
-    return data.current.value * CURRENT_LSB;
+    return data.current.value * CurrentLsb;
+}
+
+void INA229::setShuntRes(float res) {
+    if (res_ == res)
+        return;
+    res_ = res;
+    data.clear();
+    data.shuntCal.currLsb = 13'107'200'000ULL * CurrentLsb * res_;
+    dmaWrite(Register::SHUNT_CAL);
 }
