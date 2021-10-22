@@ -46,7 +46,7 @@ int main(void) {
     LL_USART_EnableDMAReq_TX(USART2);
     LL_USART_Enable(USART2);
 
-    INA229 ina229 { SPI1 };
+    INA229::Device ina229 { SPI1 };
     ina229.setShuntRes(0.022);
 
     auto usartTx = [](char* buf, uint8_t size) {
