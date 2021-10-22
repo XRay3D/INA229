@@ -191,7 +191,7 @@ struct ENERGY {
 };
 
 struct CHARGE {
-    uint64_t value : 40; //R 0h Calculated charge output. Output value is in Coulombs.Two's complement value.
+    int64_t value : 40; //R 0h Calculated charge output. Output value is in Coulombs.Two's complement value.
                          //     Value description under Section 8.1.2.
 
 };

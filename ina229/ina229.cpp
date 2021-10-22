@@ -132,9 +132,9 @@ void Device::init() {
     if (!present)
         return;
 
-    //    data.clear();
-    //    data.config.Rst = RST::SystemReset;
-    //    dmaWrite(Register::CONFIG);
+    data.clear();
+    data.config.Rst = RST::SystemReset;
+    dmaWrite(Register::CONFIG);
 
     data.clear();
     data.config.AdcRange = adcrange_ = ADCRANGE::_163_84mV;
