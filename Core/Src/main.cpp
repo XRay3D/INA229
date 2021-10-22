@@ -56,6 +56,7 @@ int main(void) {
         LL_DMA_SetDataLength(MEM_TO_USART_7, size);
         LL_DMA_SetMemoryAddress(MEM_TO_USART_7, uint32_t(buf));
         LL_DMA_EnableChannel(MEM_TO_USART_7);
+        while (!LL_DMA_IsActiveFlag_TC7(DMA1)) { }
     };
     while (1) {
         char buf[100] {};
