@@ -371,27 +371,76 @@ class Device {
 public:
     Device(SPI_TypeDef* SPIx);
 
+    //////////////////////////////////
+    /// \brief Настройка INA229
     void init();
+
+    //////////////////////////////////
+    /// @brief Установка сопротивления шунта в омах
+    /// @param Значение в омах.
     void setShunt(float shuntRes);
+
+    //////////////////////////////////
+    /// @brief Установка калибровки шунта (INA/REF -> ~1.0)
+    /// @param Значение ~1.0.
     void setShuntCal(float shuntCal);
+
+    //////////////////////////////////
+    /// \brief Установка ТКС шунта
+    /// \param ppm 0 - 16'383
+    /// \return 0 если переполнение
     bool setPPM(uint16_t ppm);
 
+    //////////////////////////////////
+    /// \brief 1 если присутствует
     operator bool() const { return present; }
 
+    //////////////////////////////////
+    /// \brief Напряжение В
+    /// \return
     float vBus();
+
+    //////////////////////////////////
+    /// \brief Напряжение шунта В
+    /// \return
     float vShunt();
+
+    //////////////////////////////////
+    /// \brief Температура °C
+    /// \return
     float dieTemp();
+
+    //////////////////////////////////
+    /// \brief Ток А
+    /// \return
     float current();
+
+    //////////////////////////////////
+    /// \brief Мощьность Вт
+    /// \return
     float power();
+
+    //////////////////////////////////
+    /// \brief Заряд Сулон?
+    /// \return
     float charge();
+
+    //////////////////////////////////
+    /// \brief Энергия Дж
+    /// \return
     float energy();
 
+    //////////////////////////////////
+    /// \brief Регистри DIAG_ALRT
     auto getDiagAlrt() const
     {
         dmaRead(Register::DIAG_ALRT);
         return data.diagAlrt;
     };
 
+    //////////////////////////////////
+    /// \brief Прверка готовности измерения
+    /// \return
     bool conversionIsComplete() const { return getDiagAlrt().cnvrf == CNVRF::ConversionIsComplete; }
 
 private:
@@ -433,7 +482,14 @@ private:
     bool present;
     float currentLsb {};
 
+    //////////////////////////////////
+    /// \brief Чтение
+    /// \param Register Id
     void dmaRead(Register reg) const;
+
+    //////////////////////////////////
+    /// \brief Запись
+    /// \param Register Id
     void dmaWrite(Register reg) const;
 };
 
