@@ -59,7 +59,8 @@ int main(void)
     //    LL_USART_Enable(USART2);
 
     INA229::Device ina229 { SPI1 };
-    ina229.setupShunt(0.002);
+    ina229.setShunt(0.002);
+    ina229.setShuntCal(9.346718 /*INA*/ / 9.386 /*REF*/); //~1.0
 
     auto usartTx = [](char* buf, uint8_t size) {
         CDC_Transmit_FS(reinterpret_cast<uint8_t*>(buf), size);

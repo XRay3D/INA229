@@ -164,22 +164,20 @@
 ╟────────────────────┼─────────────────────────┼────────────────────╢
 ║    Temperature     │–40°C to +125°C          │7.8125 m°C/LSB      ║
 ╚════════════════════╧═════════════════════════╧════════════════════╝
-
-Table 8-1. ADC Full Scale Values
-                  PARAMETER FULL SCALE VALUE RESOLUTION
-                      Shunt voltage
-±163.84 mV (ADCRANGE = 0) 312.5 nV/LSB
-±40.96 mV (ADCRANGE = 1) 78.125 nV/LSB
-              Bus voltage 0 V to 85 V 195.3125 μV/LSB
-              Temperature –40°C to +125°C 7.8125 m°C/LSB
-
 */
 
 #define MEM_TO_SPI_3 DMA1, LL_DMA_CHANNEL_3
 #define SPI_TO_MEM_2 DMA1, LL_DMA_CHANNEL_2
 namespace INA229 {
 
-constexpr uint8_t operator|(Register reg, Register rw) { return uint8_t(reg) + uint8_t(rw); }
+constexpr float ShuntVoltage163_84mV_LSB = 0.000000'312'5f;
+constexpr float ShuntVoltage40_96mV_LSB = 0.000000'078'125f;
+constexpr float BusVoltageLSB = 0.000195'312'5f;
+constexpr float TemperatureLSB = 0.007812'5f;
+
+constexpr float shuntVoltageLSB(ADCRANGE adcRange) { return adcRange == ADCRANGE::_163_84mV ? ShuntVoltage163_84mV_LSB : ShuntVoltage40_96mV_LSB; }
+
+constexpr uint8_t operator|(Register reg, Register rw) { return uint8_t(reg) | uint8_t(rw); }
 
 constexpr auto size = [](Register Reg) -> uint8_t {
     switch (Reg) {
@@ -231,42 +229,55 @@ constexpr auto size = [](Register Reg) -> uint8_t {
 void Device::dmaRead(Register reg) const
 {
     data.reg = reg | Register::Read;
-    auto size_ = size(reg) + 1;
-    LL_DMA_SetDataLength(MEM_TO_SPI_3, size_);
-    LL_DMA_SetDataLength(SPI_TO_MEM_2, size_);
+    const auto size_ = size(reg);
+    LL_DMA_SetDataLength(MEM_TO_SPI_3, size_ + 1);
+    LL_DMA_SetDataLength(SPI_TO_MEM_2, size_ + 1);
     GPIOA->BRR = LL_GPIO_PIN_4;
     LL_DMA_EnableChannel(SPI_TO_MEM_2);
     LL_DMA_EnableChannel(MEM_TO_SPI_3);
     while (!LL_DMA_IsActiveFlag_TC2(DMA1)) { }
     GPIOA->BSRR = LL_GPIO_PIN_4;
-    std::reverse(data.data, data.data + size_ - 1);
     LL_DMA_ClearFlag_TC2(DMA1);
     LL_DMA_DisableChannel(MEM_TO_SPI_3);
     LL_DMA_DisableChannel(SPI_TO_MEM_2);
+    std::reverse(data.data, data.data + size_);
 }
 
 void Device::dmaWrite(Register reg) const
 {
     data.reg = reg | Register::Write;
-    auto size_ = size(reg) + 1;
-    std::reverse(data.data, data.data + size_ - 1);
-    LL_DMA_SetDataLength(MEM_TO_SPI_3, size_);
-    LL_DMA_SetDataLength(SPI_TO_MEM_2, size_);
+    const auto size_ = size(reg);
+    std::reverse(data.data, data.data + size_);
+    LL_DMA_SetDataLength(MEM_TO_SPI_3, size_ + 1);
+    LL_DMA_SetDataLength(SPI_TO_MEM_2, size_ + 1);
     GPIOA->BRR = LL_GPIO_PIN_4;
     LL_DMA_EnableChannel(SPI_TO_MEM_2);
     LL_DMA_EnableChannel(MEM_TO_SPI_3);
     while (!LL_DMA_IsActiveFlag_TC2(DMA1)) { }
     GPIOA->BSRR = LL_GPIO_PIN_4;
-    std::reverse(data.data, data.data + size_ - 1);
     LL_DMA_ClearFlag_TC2(DMA1);
     LL_DMA_DisableChannel(MEM_TO_SPI_3);
     LL_DMA_DisableChannel(SPI_TO_MEM_2);
+    std::reverse(data.data, data.data + size_);
 }
 
 Device::Device(SPI_TypeDef* SPIx)
     : SPIx { SPIx }
 {
     init();
+}
+
+bool Device::setPPM(uint16_t ppm)
+{
+    if (ppm > 0x3FFF)
+        return {};
+    data.clear();
+    data.shuntTempco.value = ppm;
+    dmaWrite(Register::SHUNT_TEMPCO);
+    dmaRead(Register::CONFIG);
+    data.config.tempComp = TEMPCOMP::ShuntTemperatureCompensationEnabled;
+    dmaWrite(Register::SHUNT_TEMPCO);
+    return true;
 }
 
 constexpr uint8_t operator""_ms(unsigned long long val) { return val >> 1; }
@@ -284,30 +295,33 @@ void Device::init()
     LL_DMA_SetPeriphAddress(SPI_TO_MEM_2, LL_SPI_DMA_GetRegAddr(SPIx)); // SPI >> MEM
     LL_SPI_EnableDMAReq_RX(SPIx);
     LL_SPI_EnableDMAReq_TX(SPIx);
-    LL_SPI_SetNSSMode(SPIx, LL_SPI_NSS_SOFT);
+    //LL_SPI_SetNSSMode(SPIx, LL_SPI_NSS_SOFT);
     LL_SPI_Enable(SPIx);
 
     data.clear();
     dmaRead(Register::MANUFACTURER_ID);
-    present = data.manufacturerId.Id1 == 0x54 && data.manufacturerId.Id0 == 0x49; // 'T''I'
+    present = data.manufacturerId == 0x5449; // 'T''I'
     if (!present)
         return;
 
     data.clear();
-    data.config.Rst = RST::SystemReset;
+    data.config.reset = RST::SystemReset;
     dmaWrite(Register::CONFIG);
+    do {
+        dmaRead(Register::CONFIG);
+    } while (data.config.reset == RST::SystemReset);
 
     data.clear();
-    data.config.AdcRange = adcrange_ = ADCRANGE::_163_84mV;
-    data.config.Convdly = 64_ms;
-    //    data.config.RstAcc = RSTACC::ClearsRegistersENERGY_CHARGE;
+    data.config.adcRange = adcRange_ = ADCRANGE::_40_96mV;
+    //data.config.adcRange = adcRange_ = ADCRANGE::_163_84mV;
+    data.config.convDelay = 64_ms;
     dmaWrite(Register::CONFIG);
 
     data.clear();
     data.adcConfig.avg = AVG::_1024;
-    data.adcConfig.vbusct = ConvTime::_1052us;
-    data.adcConfig.vshct = ConvTime::_1052us;
-    data.adcConfig.vtct = ConvTime::_1052us;
+    data.adcConfig.vBusConvTime = ConvTime::_1052us;
+    data.adcConfig.vShtConvTime = ConvTime::_1052us;
+    data.adcConfig.tempConvTime = ConvTime::_1052us;
     data.adcConfig.mode = MODE::ContinuousTUI;
     dmaWrite(Register::ADC_CONFIG);
 }
@@ -315,19 +329,19 @@ void Device::init()
 float Device::vBus()
 {
     dmaRead(Register::VBUS);
-    return data.vbus.value * 0.000'195'312'5f; // Conversion factor: 195.3125 μV/LSB
+    return data.vbus.value * BusVoltageLSB;
 }
 
 float Device::vShunt()
 {
     dmaRead(Register::VSHUNT);
-    return data.vshunt.value * (adcrange_ == ADCRANGE::_163_84mV ? 0.000'000'312'5f : 0.000'000'078'125f); //_40_96mV??
+    return data.vshunt.value * shuntVoltageLSB(adcRange_);
 }
 
 float Device::dieTemp()
 {
     dmaRead(Register::DIETEMP);
-    return data.dietemp * 0.007'812'5f; // 7.8125 m°C/LSB
+    return data.dietemp * TemperatureLSB;
 }
 
 float Device::current()
@@ -354,14 +368,20 @@ float Device::energy()
     return data.energy.value * 16 * 3.2 * currentLsb;
 }
 
-void Device::setupShunt(float shuntRes)
+void Device::setShunt(float shuntRes)
 {
     if (shuntRes_ == shuntRes)
         return;
     shuntRes_ = shuntRes;
+    currentLsb = shuntVoltageLSB(adcRange_) / shuntRes;
+}
+
+void Device::setShuntCal(float shuntCal)
+{
+    if (shuntCal == 1.0)
+        return;
     data.clear();
-    currentLsb = (adcrange_ == ADCRANGE::_163_84mV ? 0.000'000'312'5f : 0.000'000'078'125f) / shuntRes;
-    data.shuntCal.value = 13'107'200'000ULL * currentLsb * shuntRes_;
+    data.shuntCal.value = 0x1000 * shuntCal; // 13'107'200'000ULL * shuntVoltageLSB(adcRange_);
     dmaWrite(Register::SHUNT_CAL);
 }
 

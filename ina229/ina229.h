@@ -53,56 +53,56 @@ enum class Register : uint8_t {
 enum class RST : uint8_t {
     //Reset Bit. Setting this bit to '1' generates a system reset that is the same as power-on reset.
     NormalOperation,
-    SystemReset
+    SystemReset=1
 };
 
 enum class RSTACC : uint8_t {
     //Resets the contents of accumulation registers ENERGY and CHARGE to 0
     NormalOperation,
-    ClearsRegistersENERGY_CHARGE
+    ClearsRegistersENERGY_CHARGE=1
 };
 
 enum class TEMPCOMP : uint8_t {
     //Enables temperature compensation of an external shunt
     ShuntTemperatureCompensationDisabled,
-    ShuntTemperatureCompensationEnabled
+    ShuntTemperatureCompensationEnabled=1
 };
 
 enum class ADCRANGE : uint8_t {
     //Shunt full scale range selection across IN+ and IN–.
     _163_84mV,
-    _40_96mV
+    _40_96mV=1
 };
 
 struct CONFIG {
-    unsigned : 3;          // R
-    ADCRANGE AdcRange : 1; // R/W Shunt full scale range selection across IN+ and IN–.
-    TEMPCOMP TempComp : 1; // R/W Enables temperature compensation of an external shunt
-    unsigned Convdly  : 8; // R/W Sets the Delay for initial ADC conversion in steps of unsigned ms:1;//.
+    unsigned _        : 4; // R
+    ADCRANGE adcRange : 1; // R/W Shunt full scale range selection across IN+ and IN–.
+    TEMPCOMP tempComp : 1; // R/W Enables temperature compensation of an external shunt
+    unsigned convDelay: 8; // R/W Sets the Delay for initial ADC conversion in steps of unsigned ms:1;//.
                            //     0h = 0 s
                            //     1h = 2 ms
                            //     FFh = 510 ms
-    RSTACC RstAcc     : 1; // R/W Resets the contents of accumulation registers ENERGY and CHARGE to 0
-    RST Rst           : 1; // R/W Reset Bit. Setting this bit to '1' generates a system reset that is the same as power-on reset. Resets all registers to default values.
+    RSTACC rstAcc     : 1; // R/W Resets the contents of accumulation registers ENERGY and CHARGE to 0
+    RST reset         : 1; // R/W Reset Bit. Setting this bit to '1' generates a system reset that is the same as power-on reset. Resets all registers to default values.
 };
 
 enum class MODE : uint8_t { // The user can set the MODE bits for continuous or triggered mode on bus voltage, shunt voltage or temperature measurement.
-    Shutdown = 0x0,         //0h = Shutdown
-    TriggeredU = 0x1,       //1h = Triggered bus voltage, single shot
-    TriggeredI = 0x2,       //2h = Triggered shunt voltage triggered, single shot
-    TriggeredUI = 0x3,      //3h = Triggered shunt voltage and bus voltage, single shot
-    TriggeredT = 0x4,       //4h = Triggered temperature, single shot
-    TriggeredTU = 0x5,      //5h = Triggered temperature and bus voltage, single shot
-    TriggeredTI = 0x6,      //6h = Triggered temperature and shunt voltage, single shot
-    TriggeredTUI = 0x7,     //7h = Triggered bus voltage, shunt voltage and temperature, single shot
-    //Shutdown = 0x8,       //8h = Shutdown
-    ContinuousU = 0x9,      //9h = Continuous bus voltage only
-    ContinuousI = 0xA,      //Ah = Continuous shunt voltage only
-    ContinuousUI = 0xB,     //Bh = Continuous shunt and bus voltage
-    ContinuousT = 0xC,      //Ch = Continuous temperature only
-    ContinuousTU = 0xD,     //Dh = Continuous bus voltage and temperature
-    ContinuousTI = 0xE,     //Eh = Continuous temperature and shunt voltage
-    ContinuousTUI = 0xF,    //Fh = Continuous bus, shunt voltage and temperature
+    Shutdown =      0x0, //0h = Shutdown
+    TriggeredU =    0x1, //1h = Triggered bus voltage, single shot
+    TriggeredI =    0x2, //2h = Triggered shunt voltage triggered, single shot
+    TriggeredUI =   0x3, //3h = Triggered shunt voltage and bus voltage, single shot
+    TriggeredT =    0x4, //4h = Triggered temperature, single shot
+    TriggeredTU =   0x5, //5h = Triggered temperature and bus voltage, single shot
+    TriggeredTI =   0x6, //6h = Triggered temperature and shunt voltage, single shot
+    TriggeredTUI =  0x7, //7h = Triggered bus voltage, shunt voltage and temperature, single shot
+    //Shutdown =    0x8, //8h = Shutdown
+    ContinuousU =   0x9, //9h = Continuous bus voltage only
+    ContinuousI =   0xA, //Ah = Continuous shunt voltage only
+    ContinuousUI =  0xB, //Bh = Continuous shunt and bus voltage
+    ContinuousT =   0xC, //Ch = Continuous temperature only
+    ContinuousTU =  0xD, //Dh = Continuous bus voltage and temperature
+    ContinuousTI =  0xE, //Eh = Continuous temperature and shunt voltage
+    ContinuousTUI = 0xF, //Fh = Continuous bus, shunt voltage and temperature
 };
 
     enum class ConvTime : uint8_t {
@@ -135,9 +135,9 @@ enum class MODE : uint8_t { // The user can set the MODE bits for continuous or 
 struct ADC_CONFIG {
     AVG avg         : 3; // R/W (1) Selects ADC sample averaging count. The averaging setting applies to all active inputs.
                          //          When >0h, the output registers are updated after the averaging has completed.
-    ConvTime vtct   : 3; // R/W (1052us) Sets the conversion time of the temperature measurement:
-    ConvTime vshct  : 3; // R/W (1052us) Sets the conversion time of the shunt voltage measurement:
-    ConvTime vbusct : 3; // R/W (1052us) Sets the conversion time of the bus voltage measurement:
+    ConvTime tempConvTime   : 3; // R/W (1052us) Sets the conversion time of the temperature measurement:
+    ConvTime vShtConvTime  : 3; // R/W (1052us) Sets the conversion time of the shunt voltage measurement:
+    ConvTime vBusConvTime : 3; // R/W (1052us) Sets the conversion time of the bus voltage measurement:
     MODE mode       : 4; // R/W (ContinuousTUI) The user can set the MODE bits for continuous or triggered mode on bus voltage, shunt voltage or temperature measurement.
 };
 
@@ -146,21 +146,21 @@ struct SHUNT_CAL {
                            //          that represents shunt resistance used to calculate current value in Amperes.
                            //          This also sets the resolution for the CURRENT register.
                            //          Value calculation under Section 8.1.2.
-    unsigned : 1;
+    unsigned _      : 1;
 };
 
 struct SHUNT_TEMPCO {
-    uint16_t currLsb : 14; //R/W 0h Temperature coefficient of the shunt for temperature compensation correction.
+    uint16_t value : 14;   //R/W 0h Temperature coefficient of the shunt for temperature compensation correction.
                            //       Calculated with respect to +25°C.
                            //       The full scale value of the register is 16383 ppm/°C.
                            //       The 16 bit register provides a resolution of 1ppm/°C/LSB
                            //       0h = 0 ppm/°C
                            //       3FFFh = 16383 ppm/°C
-    unsigned : 2;
+    unsigned _     : 2;
 };
 
 struct VSHUNT {
-    unsigned : 4;
+    unsigned _    : 4;
     int32_t value : 20; //R 0h Differential voltage measured across the shunt output. Two's complement value.
                          //     Conversion factor:
                          //     312.5 nV/LSB when ADCRANGE = 0
@@ -168,7 +168,7 @@ struct VSHUNT {
 };
 
 struct VBUS {
-    unsigned : 4;
+    unsigned _     : 4;
     uint32_t value : 20; //R 0h Bus voltage output. Two's complement value, however always positive.
                          //     Conversion factor: 195.3125 μV/LSB
 };
@@ -304,22 +304,22 @@ enum class MEMSTAT : uint8_t {
 };
 
 struct DIAG_ALRT {
-    MEMSTAT memstat     : 1; // R/W 1h
+    MEMSTAT memStat     : 1; // R/W 1h
     CNVRF cnvrf         : 1; // R/W 0h
     POL pol             : 1; // R/W 0h
-    BUSUL busul         : 1; // R/W 0h
-    BUSOL busol         : 1; // R/W 0h
-    SHNTUL shntul       : 1; // R/W 0h
-    SHNTOL shntol       : 1; // R/W 0h
-    TMPOL tmpol         : 1; // R/W 0h
-    unsigned            : 1; // R   0h
-    MATHOF mathof       : 1; // R   0h
-    CHARGEOF chargeof   : 1; // R   0h
-    ENERGYOF energyof   : 1; // R   0h
-    APOL apol           : 1; // R/W 0h
-    SLOWALERT slowalert : 1; // R/W 0h
+    BUSUL busUl         : 1; // R/W 0h
+    BUSOL busOl         : 1; // R/W 0h
+    SHNTUL shntUl       : 1; // R/W 0h
+    SHNTOL shntOl       : 1; // R/W 0h
+    TMPOL tmpOl         : 1; // R/W 0h
+    unsigned _          : 1; // R   0h
+    MATHOF mathOf       : 1; // R   0h
+    CHARGEOF chargeOf   : 1; // R   0h
+    ENERGYOF energyOf   : 1; // R   0h
+    APOL apOl           : 1; // R/W 0h
+    SLOWALERT slowAlert : 1; // R/W 0h
     CNVR cnvr           : 1; // R/W 0h
-    ALATCH alatch       : 1; // R/W 0h
+    ALATCH aLatch       : 1; // R/W 0h
 };
 
 using SOVL = uint16_t;  //R/W 7FFFh Sets the threshold for comparison of the value to detect Shunt Overvoltage (overcurrent protection). Two's complement value.
@@ -333,18 +333,18 @@ using SUVL = uint16_t;  //R/W 8000h Sets the threshold for comparison of the val
                         //          5 μV/LSB when ADCRANGE = 0
                         //          1.25 μV/LSB when ADCRANGE = 1.
 struct BOVL {
-    unsigned bovl : 15; //R/W 7FFFh Sets the threshold for comparison of the value to detect Bus Overvoltage (overvoltage protection). Unsigned representation,
+    unsigned busOvl : 15; //R/W 7FFFh Sets the threshold for comparison of the value to detect Bus Overvoltage (overvoltage protection). Unsigned representation,
                         //          positive value only. Conversion factor: 3.125 mV/LSB.
-    unsigned : 1;
+    unsigned _      : 1;
 };
 
 struct BUVL {
-    unsigned buvl : 15; //R/W 0h Sets the threshold for comparison of the value to detect Bus Undervoltage (undervoltage protection). Unsigned representation,
+    unsigned busUvl : 15; //R/W 0h Sets the threshold for comparison of the value to detect Bus Undervoltage (undervoltage protection). Unsigned representation,
                         //            positive value only. Conversion factor: 3.125 mV/LSB.
-    unsigned : 1;
+    unsigned _      : 1;
 };
 
-using TEMP_LIMIT /*TOL*/ = uint16_t; //R/W 7FFFh Sets the threshold for comparison of the value to detect over temperature measurements. Two's complement value.
+using TEMP_LIMIT /*TOL*/= uint16_t;  //R/W 7FFFh Sets the threshold for comparison of the value to detect over temperature measurements. Two's complement value.
                                      //          The value entered in this field compares directly against the value from the DIETEMP register to determine
                                      //          if an over temperature condition exists. Conversion factor: 7.8125 m°C/LSB.
 
@@ -353,14 +353,12 @@ using PWR_LIMIT /*POL*/ = uint16_t;  //R/W FFFFh Sets the threshold for comparis
                                      //          The value entered in this field compares directly against the value from the POWER register to determine
                                      //          if an over power condition exists. Conversion factor: 256 × Power LSB.
 
-struct MANUFACTURER_ID {
-    uint8_t Id0; //R 5449h Reads back TI in ASCII.
-    uint8_t Id1;
-};
+using MANUFACTURER_ID = uint16_t;    //R 5449h Reads back TI in ASCII.
+
 
 struct DEVICE_ID {
-    unsigned revid :  4; // R 1h    Device revision identification.
-    unsigned dieid : 12; // R 229h  Stores the device identification bits.
+    unsigned revId :  4; // R 1h    Device revision identification.
+    unsigned dieId : 12; // R 229h  Stores the device identification bits.
 };
 #pragma pack(pop)
 // clang-format on
@@ -374,7 +372,9 @@ public:
     Device(SPI_TypeDef* SPIx);
 
     void init();
-    void setupShunt(float shuntRes);
+    void setShunt(float shuntRes);
+    void setShuntCal(float shuntCal);
+    bool setPPM(uint16_t ppm);
 
     operator bool() const { return present; }
 
@@ -424,11 +424,12 @@ private:
             VBUS vbus;
             VSHUNT vshunt;
             uint8_t data[1];
+            uint64_t test64;
         };
         void clear() { std::memset(this, 0, sizeof *this); }
     } data;
 #pragma pack(pop)
-    ADCRANGE adcrange_ {};
+    ADCRANGE adcRange_ {};
     bool present;
     float currentLsb {};
 
