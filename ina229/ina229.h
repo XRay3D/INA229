@@ -142,7 +142,7 @@ struct ADC_CONFIG {
 };
 
 struct SHUNT_CAL {
-    uint16_t currLsb : 15; //R/W 1000h The register provides the device with a conversion constant value
+    uint16_t value : 15; //R/W 1000h The register provides the device with a conversion constant value
                            //          that represents shunt resistance used to calculate current value in Amperes.
                            //          This also sets the resolution for the CURRENT register.
                            //          Value calculation under Section 8.1.2.
@@ -374,7 +374,7 @@ public:
     Device(SPI_TypeDef* SPIx);
 
     void init();
-    void setShuntRes(float res);
+    void setupShunt(float shuntRes);
 
     operator bool() const { return present; }
 
@@ -386,7 +386,8 @@ public:
     float charge();
     float energy();
 
-    auto getDiagAlrt() const {
+    auto getDiagAlrt() const
+    {
         dmaRead(Register::DIAG_ALRT);
         return data.diagAlrt;
     };
@@ -396,7 +397,7 @@ public:
 private:
     SPI_TypeDef* const SPIx;
 
-    float res_;
+    float shuntRes_;
 
 #pragma pack(push, 1)
     mutable struct Data {
@@ -429,7 +430,7 @@ private:
 #pragma pack(pop)
     ADCRANGE adcrange_ {};
     bool present;
-    static constexpr float CURRENT_LSB = 1.0 / 524'288UL;
+    float currentLsb {};
 
     void dmaRead(Register reg) const;
     void dmaWrite(Register reg) const;

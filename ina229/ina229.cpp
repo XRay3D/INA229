@@ -321,7 +321,7 @@ float Device::vBus()
 float Device::vShunt()
 {
     dmaRead(Register::VSHUNT);
-    return data.vshunt.value * (adcrange_ == ADCRANGE::_163_84mV ? 0.000'000'312'5f : 0.000'000'078'125f);//_40_96mV??
+    return data.vshunt.value * (adcrange_ == ADCRANGE::_163_84mV ? 0.000'000'312'5f : 0.000'000'078'125f); //_40_96mV??
 }
 
 float Device::dieTemp()
@@ -333,34 +333,35 @@ float Device::dieTemp()
 float Device::current()
 {
     dmaRead(Register::CURRENT);
-    return data.current.value * CURRENT_LSB;
+    return data.current.value * currentLsb;
 }
 
 float Device::power()
 {
     dmaRead(Register::POWER);
-    return data.power.value * 3.2 * CURRENT_LSB;
+    return data.power.value * 3.2 * currentLsb;
 }
 
 float Device::charge()
 {
     dmaRead(Register::CHARGE);
-    return data.charge.value * CURRENT_LSB;
+    return data.charge.value * currentLsb;
 }
 
 float Device::energy()
 {
     dmaRead(Register::ENERGY);
-    return data.energy.value * 16 * 3.2 * CURRENT_LSB;
+    return data.energy.value * 16 * 3.2 * currentLsb;
 }
 
-void Device::setShuntRes(float res)
+void Device::setupShunt(float shuntRes)
 {
-    if (res_ == res)
+    if (shuntRes_ == shuntRes)
         return;
-    res_ = res;
+    shuntRes_ = shuntRes;
     data.clear();
-    data.shuntCal.currLsb = 13'107'200'000ULL * CURRENT_LSB * res_;
+    currentLsb = (adcrange_ == ADCRANGE::_163_84mV ? 0.000'000'312'5f : 0.000'000'078'125f) / shuntRes;
+    data.shuntCal.value = 13'107'200'000ULL * currentLsb * shuntRes_;
     dmaWrite(Register::SHUNT_CAL);
 }
 
