@@ -18,7 +18,6 @@
 #include "ina229.h"
 #include "main.h"
 
-
 /*
 ╔════════════════╤═══════════════════╤════════════════════╤════════════════════╤════════════════════╗
 ║ ADC CONVERSION │   OUTPUT SAMPLE   │   OUTPUT SAMPLE    │  NOISE-FREE ENOB   │  NOISE-FREE ENOB   ║
@@ -154,6 +153,26 @@
 ║4120            │                   │4218.88             │20                  │18.7                ║
 ╚════════════════╧═══════════════════╧════════════════════╧════════════════════╧════════════════════╝
 
+╔════════════════════╤═════════════════════════╤════════════════════╗
+║   PARAMETER        │    FULL SCALE VALUE     │     RESOLUTION     ║
+╟────────────────────┼─────────────────────────┼────────────────────╢
+║                    │±163.84 mV (ADCRANGE = 0)│312.5 nV/LSB        ║
+║    Shunt voltage   ├─────────────────────────┼────────────────────╢
+║                    │ ±40.96 mV (ADCRANGE = 1)│78.125 nV/LSB       ║
+╟────────────────────┼─────────────────────────┼────────────────────╢
+║    Bus voltage     │0 V to 85 V              │195.3125 μV/LSB     ║
+╟────────────────────┼─────────────────────────┼────────────────────╢
+║    Temperature     │–40°C to +125°C          │7.8125 m°C/LSB      ║
+╚════════════════════╧═════════════════════════╧════════════════════╝
+
+Table 8-1. ADC Full Scale Values
+                  PARAMETER FULL SCALE VALUE RESOLUTION
+                      Shunt voltage
+±163.84 mV (ADCRANGE = 0) 312.5 nV/LSB
+±40.96 mV (ADCRANGE = 1) 78.125 nV/LSB
+              Bus voltage 0 V to 85 V 195.3125 μV/LSB
+              Temperature –40°C to +125°C 7.8125 m°C/LSB
+
 */
 
 #define MEM_TO_SPI_3 DMA1, LL_DMA_CHANNEL_3
@@ -209,7 +228,8 @@ constexpr auto size = [](Register Reg) -> uint8_t {
     }
 };
 
-void Device::dmaRead(Register reg) const {
+void Device::dmaRead(Register reg) const
+{
     data.reg = reg | Register::Read;
     auto size_ = size(reg) + 1;
     LL_DMA_SetDataLength(MEM_TO_SPI_3, size_);
@@ -225,7 +245,8 @@ void Device::dmaRead(Register reg) const {
     LL_DMA_DisableChannel(SPI_TO_MEM_2);
 }
 
-void Device::dmaWrite(Register reg) const {
+void Device::dmaWrite(Register reg) const
+{
     data.reg = reg | Register::Write;
     auto size_ = size(reg) + 1;
     std::reverse(data.data, data.data + size_ - 1);
@@ -243,13 +264,15 @@ void Device::dmaWrite(Register reg) const {
 }
 
 Device::Device(SPI_TypeDef* SPIx)
-    : SPIx { SPIx } {
+    : SPIx { SPIx }
+{
     init();
 }
 
 constexpr uint8_t operator""_ms(unsigned long long val) { return val >> 1; }
 
-void Device::init() {
+void Device::init()
+{
     LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_4, LL_GPIO_MODE_OUTPUT);
     GPIOA->BSRR = LL_GPIO_PIN_4;
 
@@ -282,49 +305,57 @@ void Device::init() {
 
     data.clear();
     data.adcConfig.avg = AVG::_1024;
-    data.adcConfig.vbusct = ConvTime::_4120us;
-    data.adcConfig.vshct = ConvTime::_4120us;
-    data.adcConfig.vtct = ConvTime::_4120us;
+    data.adcConfig.vbusct = ConvTime::_1052us;
+    data.adcConfig.vshct = ConvTime::_1052us;
+    data.adcConfig.vtct = ConvTime::_1052us;
     data.adcConfig.mode = MODE::ContinuousTUI;
     dmaWrite(Register::ADC_CONFIG);
 }
 
-float Device::vBus() {
+float Device::vBus()
+{
     dmaRead(Register::VBUS);
     return data.vbus.value * 0.000'195'312'5f; // Conversion factor: 195.3125 μV/LSB
 }
 
-float Device::vShunt() {
+float Device::vShunt()
+{
     dmaRead(Register::VSHUNT);
-    return data.vshunt.value * (adcrange_ == ADCRANGE::_163_84mV ? 0.000'000'312'5f : 0.000'078'125f);
+    return data.vshunt.value * (adcrange_ == ADCRANGE::_163_84mV ? 0.000'000'312'5f : 0.000'000'078'125f);//_40_96mV??
 }
 
-float Device::dieTemp() {
+float Device::dieTemp()
+{
     dmaRead(Register::DIETEMP);
     return data.dietemp * 0.007'812'5f; // 7.8125 m°C/LSB
 }
 
-float Device::current() {
+float Device::current()
+{
     dmaRead(Register::CURRENT);
     return data.current.value * CURRENT_LSB;
 }
 
-float Device::power() {
+float Device::power()
+{
     dmaRead(Register::POWER);
     return data.power.value * 3.2 * CURRENT_LSB;
 }
 
-float Device::charge() {
+float Device::charge()
+{
     dmaRead(Register::CHARGE);
     return data.charge.value * CURRENT_LSB;
 }
 
-float Device::energy() {
+float Device::energy()
+{
     dmaRead(Register::ENERGY);
     return data.energy.value * 16 * 3.2 * CURRENT_LSB;
 }
 
-void Device::setShuntRes(float res) {
+void Device::setShuntRes(float res)
+{
     if (res_ == res)
         return;
     res_ = res;

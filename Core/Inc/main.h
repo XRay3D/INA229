@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32l4xx_hal.h"
 
 #include "stm32l4xx_ll_dma.h"
 #include "stm32l4xx_ll_crs.h"
@@ -40,12 +41,7 @@ extern "C" {
 #include "stm32l4xx_ll_pwr.h"
 #include "stm32l4xx_ll_spi.h"
 #include "stm32l4xx_ll_tim.h"
-#include "stm32l4xx_ll_usart.h"
 #include "stm32l4xx_ll_gpio.h"
-
-#if defined(USE_FULL_ASSERT)
-#include "stm32_assert.h"
-#endif /* USE_FULL_ASSERT */
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -81,6 +77,8 @@ void Error_Handler(void);
 #define VCP_TX_GPIO_Port GPIOA
 #define RESET_Pin LL_GPIO_PIN_3
 #define RESET_GPIO_Port GPIOA
+#define USB_ENUM_Pin LL_GPIO_PIN_10
+#define USB_ENUM_GPIO_Port GPIOA
 #define SWDIO_Pin LL_GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin LL_GPIO_PIN_14
@@ -89,18 +87,6 @@ void Error_Handler(void);
 #define VCP_RX_GPIO_Port GPIOA
 #define LD3_Pin LL_GPIO_PIN_3
 #define LD3_GPIO_Port GPIOB
-#ifndef NVIC_PRIORITYGROUP_0
-#define NVIC_PRIORITYGROUP_0         ((uint32_t)0x00000007) /*!< 0 bit  for pre-emption priority,
-                                                                 4 bits for subpriority */
-#define NVIC_PRIORITYGROUP_1         ((uint32_t)0x00000006) /*!< 1 bit  for pre-emption priority,
-                                                                 3 bits for subpriority */
-#define NVIC_PRIORITYGROUP_2         ((uint32_t)0x00000005) /*!< 2 bits for pre-emption priority,
-                                                                 2 bits for subpriority */
-#define NVIC_PRIORITYGROUP_3         ((uint32_t)0x00000004) /*!< 3 bits for pre-emption priority,
-                                                                 1 bit  for subpriority */
-#define NVIC_PRIORITYGROUP_4         ((uint32_t)0x00000003) /*!< 4 bits for pre-emption priority,
-                                                                 0 bit  for subpriority */
-#endif
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

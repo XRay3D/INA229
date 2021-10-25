@@ -56,7 +56,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern PCD_HandleTypeDef hpcd_USB_FS;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -186,7 +186,7 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
   /* USER CODE END SysTick_IRQn 0 */
-
+  HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
   /* USER CODE END SysTick_IRQn 1 */
@@ -228,17 +228,17 @@ void DMA1_Channel3_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles DMA1 channel7 global interrupt.
+  * @brief This function handles USB event interrupt through EXTI line 17.
   */
-void DMA1_Channel7_IRQHandler(void)
+void USB_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
+  /* USER CODE BEGIN USB_IRQn 0 */
 
-  /* USER CODE END DMA1_Channel7_IRQn 0 */
+  /* USER CODE END USB_IRQn 0 */
+  HAL_PCD_IRQHandler(&hpcd_USB_FS);
+  /* USER CODE BEGIN USB_IRQn 1 */
 
-  /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
-
-  /* USER CODE END DMA1_Channel7_IRQn 1 */
+  /* USER CODE END USB_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
